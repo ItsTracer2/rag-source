@@ -8,21 +8,27 @@ découpage ou indexation. Il sera plus tard exposé par la commande
 
 from __future__ import annotations
 
+import statistics
 import sys
 from collections import Counter
 from pathlib import Path
 
-from rag_source.domain import SectionKind
+from rag_source.domain import Chunk, SectionKind
+from rag_source.ingest.chunker import chunk_document
 from rag_source.ingest.corpus import load_corpus
+from rag_source.ingest.tokenizer import get_token_counter
 
 
 def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
-    root = Path(args[0]) if args else Path("data")
+    root = Path(args[0]) if args and not args[0].startswith("-") else Path("data")
     show_sample = "--sample" in args
+    show_chunks = "--chunks" in args
 
     report = load_corpus(root)
+    counter = get_token_counter(None)
     totals: Counter[str] = Counter()
+    chunks: list[Chunk] = []
 
     for entry in report.entries:
         if entry.error is not None:
@@ -48,14 +54,31 @@ def main(argv: list[str] | None = None) -> int:
             section = max(document.sections, key=lambda s: len(s.text))
             path = " › ".join(section.heading_path) or "(racine)"
             print(f"   extrait  : [{path}] {section.text[:300]!r}")
+        document_chunks = chunk_document(document, counter)
+        chunks.extend(document_chunks)
+        if show_chunks:
+            sizes = [c.token_count for c in document_chunks]
+            print(
+                f"   chunks   : {len(document_chunks)} "
+                f"(médiane {statistics.median(sizes):.0f} tokens, max {max(sizes)})"
+            )
         totals["documents"] += 1
         totals["sections"] += len(document.sections)
         totals["caractères"] += chars
 
     print(
         f"\n{totals['documents']} document(s), {totals['sections']} section(s), "
-        f"{totals['caractères']} caractères, {totals['échecs']} échec(s)."
+        f"{len(chunks)} chunk(s), {totals['caractères']} caractères, "
+        f"{totals['échecs']} échec(s)."
     )
+    if chunks:
+        sizes = [chunk.token_count for chunk in chunks]
+        chunk_kinds = Counter(chunk.kind.value for chunk in chunks)
+        print(
+            f"Tokens par chunk (estimation) : médiane {statistics.median(sizes):.0f}, "
+            f"moyenne {statistics.mean(sizes):.0f}, max {max(sizes)}. "
+            f"Répartition : {dict(chunk_kinds)}."
+        )
     return 1 if totals["échecs"] else 0
 
 

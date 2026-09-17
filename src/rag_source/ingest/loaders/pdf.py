@@ -20,8 +20,10 @@ silence.
 from __future__ import annotations
 
 import re
+import subprocess
 from collections import Counter
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -167,7 +169,9 @@ def _extract_items(
 
     kept = _drop_running_heads(items, doc)
     if ocr_pages:
-        warnings.append(f"{ocr_pages} page(s) reconnue(s) par OCR ({ocr_languages}).")
+        warnings.append(
+            f"{ocr_pages} page(s) reconnue(s) par OCR ({_usable_languages(ocr_languages)})."
+        )
     if ocr_failure:
         warnings.append(f"OCR indisponible : {ocr_failure}")
     if empty_pages:
@@ -181,12 +185,40 @@ def _ocr_blocks(page: pymupdf.Page, languages: str) -> tuple[list[_Item], float 
     Une indisponibilité de Tesseract n'est jamais fatale : elle remonte comme
     avertissement, et le document est traité avec ce qui a pu être extrait.
     """
+    usable = _usable_languages(languages)
+    if not usable:
+        return [], None, f"aucune des langues demandées n'est installée ({languages})"
     try:
-        textpage = page.get_textpage_ocr(language=languages, dpi=_OCR_DPI, full=True)
+        textpage = page.get_textpage_ocr(language=usable, dpi=_OCR_DPI, full=True)
     except Exception as exc:
         return [], None, str(exc).splitlines()[0]
     blocks, gutter = _page_blocks(page, [], textpage=textpage)
     return blocks, gutter, None
+
+
+@cache
+def _installed_languages() -> frozenset[str]:
+    """Langues Tesseract réellement présentes sur la machine."""
+    try:
+        result = subprocess.run(
+            ["tesseract", "--list-langs"], capture_output=True, text=True, timeout=10, check=False
+        )
+    except (OSError, subprocess.SubprocessError):
+        return frozenset()
+    lines = result.stdout.splitlines()[1:]  # la première ligne est un en-tête
+    return frozenset(line.strip() for line in lines if line.strip())
+
+
+def _usable_languages(requested: str) -> str:
+    """Restreint les langues demandées à celles qui sont installées.
+
+    Sans ce filtrage, Tesseract échoue sur toute la page dès qu'une seule langue
+    manque, et écrit directement sur la sortie d'erreur — un message que le
+    programme ne peut ni intercepter ni expliquer.
+    """
+    installed = _installed_languages()
+    usable = [language for language in requested.split("+") if language in installed]
+    return "+".join(usable)
 
 
 def _page_tables(page: pymupdf.Page) -> list[tuple[tuple[float, ...], str]]:
