@@ -12,13 +12,25 @@ MD = "# Titre\n\nUn paragraphe de contenu suffisamment long pour être conservé
 
 class TestRegistry:
     def test_all_formats_registered(self) -> None:
-        assert {".pdf", ".md", ".markdown", ".xlsx", ".xlsm"} <= supported_extensions()
+        assert {
+            ".pdf",
+            ".md",
+            ".markdown",
+            ".xlsx",
+            ".xlsm",
+            ".csv",
+            ".tsv",
+            ".txt",
+            ".html",
+            ".htm",
+            ".docx",
+        } <= supported_extensions()
 
     def test_extension_is_case_insensitive(self, tmp_path: Path) -> None:
         assert loader_for(tmp_path / "DOC.PDF") is not None
 
     def test_unknown_extension(self, tmp_path: Path) -> None:
-        assert loader_for(tmp_path / "notes.txt") is None
+        assert loader_for(tmp_path / "archive.zip") is None
 
 
 class TestDiscovery:
@@ -30,7 +42,7 @@ class TestDiscovery:
         (tmp_path / "sous" / "dossier").mkdir(parents=True)
         (tmp_path / "a.md").write_text(MD, encoding="utf-8")
         (tmp_path / "sous" / "dossier" / "b.md").write_text(MD, encoding="utf-8")
-        (tmp_path / "notes.txt").write_text("ignoré", encoding="utf-8")
+        (tmp_path / "image.png").write_bytes(b"\x89PNG")
 
         found = [p.relative_to(tmp_path).as_posix() for p in iter_corpus(tmp_path)]
         assert found == ["a.md", "sous/dossier/b.md"]
@@ -63,8 +75,8 @@ class TestLoadDocument:
         assert file_sha256(path) != before
 
     def test_unsupported_format(self, tmp_path: Path) -> None:
-        path = tmp_path / "a.txt"
-        path.write_text("x", encoding="utf-8")
+        path = tmp_path / "a.zip"
+        path.write_bytes(b"PK")
         with pytest.raises(LoaderError, match="Format non géré"):
             load_document(path, tmp_path)
 

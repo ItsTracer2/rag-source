@@ -31,6 +31,10 @@ class DocumentFormat(StrEnum):
     PDF = "pdf"
     MARKDOWN = "markdown"
     EXCEL = "excel"
+    DELIMITED = "delimited"
+    TEXT = "text"
+    HTML = "html"
+    DOCX = "docx"
 
 
 @dataclass(frozen=True, slots=True)

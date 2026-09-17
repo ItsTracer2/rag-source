@@ -66,34 +66,42 @@ class TestSovereignty:
         assert settings.llm_provider is LLMProvider.LOCAL
         assert settings.sovereignty is Sovereignty.LOCAL
 
-    def test_external_provider_refused_without_ack(self) -> None:
-        with pytest.raises(ValidationError, match="souveraineté"):
-            make(llm_provider="anthropic", llm_api_key="sk-test")
+    def test_external_provider_allowed_by_default(self) -> None:
+        """Outil générique : un LLM externe est permis, mais toujours signalé."""
+        settings = make(llm_provider="anthropic", llm_api_key="sk-test")
+        assert settings.sovereignty is Sovereignty.EXTERNAL
 
-    def test_external_provider_refused_with_wrong_ack(self) -> None:
-        with pytest.raises(ValidationError, match="souveraineté"):
-            make(llm_provider="anthropic", llm_api_key="sk-test", allow_external_llm="true")
+    def test_external_provider_refused_when_local_required(self) -> None:
+        with pytest.raises(ValidationError, match="souverain"):
+            make(require_local_llm=True, llm_provider="anthropic", llm_api_key="sk-test")
 
-    def test_external_provider_accepted_with_exact_ack(self) -> None:
+    def test_wrong_acknowledgement_is_refused(self) -> None:
+        with pytest.raises(ValidationError, match="souverain"):
+            make(
+                require_local_llm=True,
+                llm_provider="anthropic",
+                llm_api_key="sk-test",
+                allow_external_llm="true",
+            )
+
+    def test_exact_acknowledgement_is_accepted(self) -> None:
         settings = make(
-            llm_provider="anthropic", llm_api_key="sk-test", allow_external_llm=EXTERNAL_LLM_ACK
+            require_local_llm=True,
+            llm_provider="anthropic",
+            llm_api_key="sk-test",
+            allow_external_llm=EXTERNAL_LLM_ACK,
         )
         assert settings.sovereignty is Sovereignty.EXTERNAL
 
-    def test_local_provider_pointing_to_public_host_is_refused(self) -> None:
-        """Contournement à bloquer : provider 'local' mais URL d'une API publique."""
+    def test_local_provider_pointing_to_public_host_is_detected(self) -> None:
+        """Contournement à repérer : provider 'local' mais URL d'une API publique."""
+        assert make(llm_base_url="https://api.openai.com/v1").sovereignty is Sovereignty.EXTERNAL
         with pytest.raises(ValidationError, match="ne pointe pas vers un hôte local"):
-            make(llm_base_url="https://api.openai.com/v1")
-
-    def test_local_provider_on_public_host_accepted_with_ack(self) -> None:
-        settings = make(
-            llm_base_url="https://llm.example.com/v1", allow_external_llm=EXTERNAL_LLM_ACK
-        )
-        assert settings.sovereignty is Sovereignty.EXTERNAL
+            make(require_local_llm=True, llm_base_url="https://api.openai.com/v1")
 
     def test_anthropic_requires_api_key(self) -> None:
         with pytest.raises(ValidationError, match="LLM_API_KEY"):
-            make(llm_provider="anthropic", allow_external_llm=EXTERNAL_LLM_ACK)
+            make(llm_provider="anthropic")
 
 
 def test_reads_prefixed_environment(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -4,17 +4,20 @@ Toute la configuration passe par ce module : une seule source de vérité, typé
 validée au démarrage. Une configuration invalide fait échouer le démarrage plutôt
 que de produire un comportement silencieusement incorrect.
 
-Garde de souveraineté
----------------------
-Par défaut, aucune donnée du corpus ne quitte l'hôte. Deux situations enverraient
-des extraits du corpus à un tiers :
+Souveraineté des données
+------------------------
+RAG-Source est un outil générique : rien n'impose d'utiliser un LLM local pour
+interroger une notice d'électroménager. Deux situations envoient malgré tout des
+extraits du corpus à un tiers, et le système sait toujours dire laquelle s'applique
+(:attr:`Settings.sovereignty`, exposée par ``/health`` et par l'interface) :
 
 1. un fournisseur LLM externe (``llm_provider != "local"``) ;
 2. un fournisseur « local » dont l'URL pointe en fait vers un hôte public.
 
-Dans les deux cas, le démarrage est refusé sauf si ``RAG_SOURCE_ALLOW_EXTERNAL_LLM``
-vaut exactement :data:`EXTERNAL_LLM_ACK`. La valeur est volontairement verbeuse :
-ce n'est pas un réglage de qualité, c'est une rupture de la garantie de souveraineté.
+Le **profil de déploiement Scaleway** pose ``RAG_SOURCE_REQUIRE_LOCAL_LLM=true`` :
+là, le démarrage est refusé dans ces deux cas, sauf acquittement explicite par
+``RAG_SOURCE_ALLOW_EXTERNAL_LLM`` valant exactement :data:`EXTERNAL_LLM_ACK`. En
+local, le choix reste libre et seul un avertissement est affiché.
 """
 
 from __future__ import annotations
@@ -44,6 +47,14 @@ class LLMProvider(StrEnum):
 class Sovereignty(StrEnum):
     LOCAL = "local"
     EXTERNAL = "external"
+
+
+class OcrMode(StrEnum):
+    AUTO = "auto"
+    """OCR uniquement sur les pages sans couche texte (défaut)."""
+    OFF = "off"
+    FORCE = "force"
+    """OCR sur toutes les pages, y compris celles qui ont déjà du texte."""
 
 
 def is_private_endpoint(url: str) -> bool:
@@ -94,7 +105,14 @@ class Settings(BaseSettings):
     llm_context_size: int = Field(default=8192, ge=2048)
     llm_max_tokens: int = Field(default=1024, ge=64)
     llm_temperature: float = Field(default=0.1, ge=0.0, le=2.0)
+    require_local_llm: bool = False
+    """Interdit tout LLM externe. Activé par le profil de déploiement Scaleway."""
     allow_external_llm: str | None = None
+
+    # ── OCR (PDF sans couche texte) ─────────────────────────────────────────
+    ocr_mode: OcrMode = OcrMode.AUTO
+    ocr_languages: str = "eng+fra"
+    """Langues Tesseract, séparées par « + » (ex. ``eng``, ``eng+deu+spa``)."""
 
     # ── Base vectorielle ────────────────────────────────────────────────────
     qdrant_url: str = "http://qdrant:6333"
@@ -103,7 +121,11 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_sovereignty(self) -> Settings:
-        if self.sovereignty is Sovereignty.EXTERNAL and self.allow_external_llm != EXTERNAL_LLM_ACK:
+        if (
+            self.require_local_llm
+            and self.sovereignty is Sovereignty.EXTERNAL
+            and self.allow_external_llm != EXTERNAL_LLM_ACK
+        ):
             if self.llm_provider is LLMProvider.LOCAL:
                 reason = (
                     f"llm_base_url ({self.llm_base_url}) ne pointe pas vers un hôte local ou privé"
@@ -111,9 +133,9 @@ class Settings(BaseSettings):
             else:
                 reason = f"le fournisseur LLM '{self.llm_provider}' est une API externe"
             raise ValueError(
-                f"Garantie de souveraineté rompue : {reason}. Des extraits du corpus "
-                "quitteraient l'hôte. Pour l'accepter en connaissance de cause, définir "
-                f"RAG_SOURCE_ALLOW_EXTERNAL_LLM={EXTERNAL_LLM_ACK}"
+                f"Déploiement souverain (RAG_SOURCE_REQUIRE_LOCAL_LLM=true) : {reason}. "
+                "Des extraits du corpus quitteraient l'hôte. Pour l'accepter en "
+                f"connaissance de cause, définir RAG_SOURCE_ALLOW_EXTERNAL_LLM={EXTERNAL_LLM_ACK}"
             )
         if self.llm_provider is LLMProvider.ANTHROPIC and self.llm_api_key is None:
             raise ValueError("RAG_SOURCE_LLM_API_KEY est requis pour le fournisseur 'anthropic'.")
