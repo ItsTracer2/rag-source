@@ -95,6 +95,9 @@ class Settings(BaseSettings):
     """Jeton Bearer exigé par l'API. Obligatoire dès que l'API est démarrée."""
 
     # ── Modèles auto-hébergés (llama-server) ────────────────────────────────
+    # Les valeurs par défaut sont les noms de service Docker : elles conviennent à
+    # l'API exécutée dans la pile. Depuis la machine hôte, le .env généré par
+    # scripts/init-env.sh pointe vers les ports publiés (127.0.0.1:808x).
     embed_url: str = "http://embed:8080"
     rerank_url: str = "http://rerank:8080"
 

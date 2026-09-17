@@ -9,6 +9,12 @@
 #
 # Tous les ports sont publiés sur 127.0.0.1 uniquement : rien n'est exposé au
 # réseau local. L'accès distant passe par un tunnel SSH (cf. deploy/scaleway).
+#
+# Les contextes d'embedding et de reranking sont volontairement courts (2048) :
+# llama.cpp réserve la mémoire du contexte multipliée par le nombre de créneaux
+# parallèles. Avec 8192 et 4 créneaux, le conteneur se faisait tuer par manque de
+# mémoire au milieu d'une indexation. Les chunks font au plus 700 tokens : 2048
+# laisse une marge confortable.
 
 name: rag-source
 
@@ -46,8 +52,10 @@ services:
       --host 0.0.0.0 --port 8080
       --embeddings
       --pooling cls
-      --ubatch-size 8192
-      --ctx-size 8192
+      --parallel 1
+      --ctx-size ${RAG_SOURCE_EMBED_CTX:-2048}
+      --batch-size ${RAG_SOURCE_EMBED_CTX:-2048}
+      --ubatch-size ${RAG_SOURCE_EMBED_CTX:-2048}
       --threads ${RAG_SOURCE_EMBED_THREADS:-4}
     ports:
       - "127.0.0.1:8082:8080"
@@ -59,7 +67,10 @@ services:
       --model /models/bge-reranker-v2-m3-Q8_0.gguf
       --host 0.0.0.0 --port 8080
       --reranking
-      --ctx-size 8192
+      --parallel 1
+      --ctx-size ${RAG_SOURCE_RERANK_CTX:-2048}
+      --batch-size ${RAG_SOURCE_RERANK_CTX:-2048}
+      --ubatch-size ${RAG_SOURCE_RERANK_CTX:-2048}
       --threads ${RAG_SOURCE_RERANK_THREADS:-4}
     ports:
       - "127.0.0.1:8083:8080"
