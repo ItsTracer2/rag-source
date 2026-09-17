@@ -1,0 +1,16 @@
+# Override : LLM exécuté nativement sur l'hôte, hors Docker.
+#
+#   brew install llama.cpp
+#   llama-server --model models/qwen2.5-3b-instruct-q4_k_m.gguf --port 8081 --ctx-size 8192
+#   docker compose -f compose.yaml -f compose.native-llm.yaml up -d
+#
+# Pourquoi : sur macOS, Docker n'a pas accès au GPU. Un modèle exécuté dans un
+# conteneur tourne donc en CPU pur, là où le même modèle lancé nativement profite
+# de Metal — plusieurs fois plus rapide. L'embedding et le reranking restent dans
+# Docker : ils sont assez légers pour que l'écart ne se voie pas.
+
+services:
+  llm:
+    # Le service reste déclaré pour que les autres puissent le référencer, mais
+    # il ne démarre plus : le profil "manual" n'est jamais activé par défaut.
+    profiles: ["manual"]

@@ -86,8 +86,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── Corpus ──────────────────────────────────────────────────────────────
+    # ── Corpus et modèles ───────────────────────────────────────────────────
     data_dir: Path = Path("data")
+    models_dir: Path = Path("models")
 
     # ── API ─────────────────────────────────────────────────────────────────
     api_token: SecretStr | None = None
@@ -140,6 +141,11 @@ class Settings(BaseSettings):
         if self.llm_provider is LLMProvider.ANTHROPIC and self.llm_api_key is None:
             raise ValueError("RAG_SOURCE_LLM_API_KEY est requis pour le fournisseur 'anthropic'.")
         return self
+
+    @property
+    def tokenizer_path(self) -> Path:
+        """Tokenizer du modèle d'embedding, téléchargé par scripts/fetch-models.sh."""
+        return self.models_dir / "tokenizer.json"
 
     @property
     def sovereignty(self) -> Sovereignty:

@@ -1,0 +1,23 @@
+# Modèles épinglés, par empreinte sha256.
+#
+# Format : role|profil|dépôt Hugging Face|fichier|sha256|octets
+#
+# Pourquoi épingler : un dépôt Hugging Face peut être mis à jour ou republié. Sans
+# empreinte, deux installations censées être identiques n'exécutent pas le même
+# modèle, et l'index vectoriel produit devient incomparable. Le script
+# scripts/fetch-models.sh refuse tout fichier dont l'empreinte diffère.
+#
+# Profils LLM (choix par RAG_SOURCE_LLM_PROFILE) :
+#   small  ~2,1 Go — poste de dev, démo, machine 8 Go
+#   medium ~4,7 Go — défaut sur serveur, meilleur compromis qualité/vitesse
+#   large  ~9,0 Go — qualité maximale, nécessite 16 Go et de la patience en CPU
+#
+# Les modèles d'embedding et de reranking sont en Q8_0 : ils sont petits, et une
+# quantification agressive dégraderait directement la pertinence de la recherche.
+
+embed|all|gpustack/bge-m3-GGUF|bge-m3-Q8_0.gguf|950f4a8e5e19477a6d3c26d2f162233c20002c601f75e4b002e3239997821167|634553760
+rerank|all|gpustack/bge-reranker-v2-m3-GGUF|bge-reranker-v2-m3-Q8_0.gguf|a43c7c9b11a4c1517e5bf95151960e1621d1b72f7a493364b01e386cf1aaa1d3|635676416
+tokenizer|all|BAAI/bge-m3|tokenizer.json|21106b6d7dab2952c1d496fb21d5dc9db75c28ed361a05f5020bbba27810dd08|17098108
+llm|small|Qwen/Qwen2.5-3B-Instruct-GGUF|qwen2.5-3b-instruct-q4_k_m.gguf|626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d|2104932768
+llm|medium|bartowski/Qwen2.5-7B-Instruct-GGUF|Qwen2.5-7B-Instruct-Q4_K_M.gguf|65b8fcd92af6b4fefa935c625d1ac27ea29dcb6ee14589c55a8f115ceaaa1423|4683074240
+llm|large|bartowski/Qwen2.5-14B-Instruct-GGUF|Qwen2.5-14B-Instruct-Q4_K_M.gguf|e47ad95dad6ff848b431053b375adb5d39321290ea2c638682577dafca87c008|8988110976

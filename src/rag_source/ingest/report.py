@@ -13,6 +13,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from rag_source.config import get_settings
 from rag_source.domain import Chunk, SectionKind
 from rag_source.ingest.chunker import chunk_document
 from rag_source.ingest.corpus import load_corpus
@@ -26,7 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     show_chunks = "--chunks" in args
 
     report = load_corpus(root)
-    counter = get_token_counter(None)
+    counter = get_token_counter(get_settings().tokenizer_path)
     totals: Counter[str] = Counter()
     chunks: list[Chunk] = []
 
@@ -75,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         sizes = [chunk.token_count for chunk in chunks]
         chunk_kinds = Counter(chunk.kind.value for chunk in chunks)
         print(
-            f"Tokens par chunk (estimation) : médiane {statistics.median(sizes):.0f}, "
+            f"Tokens par chunk : médiane {statistics.median(sizes):.0f}, "
             f"moyenne {statistics.mean(sizes):.0f}, max {max(sizes)}. "
             f"Répartition : {dict(chunk_kinds)}."
         )
