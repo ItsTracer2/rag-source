@@ -25,7 +25,7 @@ from pathlib import Path
 from rag_source.clients.embedder import Embedder
 from rag_source.domain import Chunk, LoadedDocument
 from rag_source.ingest.chunker import ChunkingConfig, chunk_document
-from rag_source.ingest.corpus import file_sha256, iter_corpus, load_document
+from rag_source.ingest.corpus import file_sha256, iter_corpus, load_document, relative_source
 from rag_source.ingest.loaders import LoaderError
 from rag_source.ingest.tokenizer import TokenCounter
 from rag_source.store.base import ChunkStore
@@ -89,7 +89,7 @@ def index_corpus(
     documents_to_write: list[LoadedDocument] = []
     present: set[str] = set()
     for path in iter_corpus(root):
-        source = path.relative_to(root).as_posix()
+        source = relative_source(path, root)
         present.add(source)
         # L'empreinte se calcule sur les octets du fichier : inutile d'ouvrir un PDF,
         # d'en extraire la structure et de le découper pour découvrir ensuite qu'il

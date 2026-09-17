@@ -74,6 +74,21 @@ class TestLoadDocument:
         path.write_text(MD + "\nAjout de contenu.\n", encoding="utf-8")
         assert file_sha256(path) != before
 
+    def test_source_is_normalized_to_nfc(self, tmp_path: Path) -> None:
+        """macOS décompose les accents des noms de fichiers : à normaliser.
+
+        Sans cela, « nécessaires.md » écrit à la main ne correspond pas au même nom
+        lu depuis le disque, et les filtres par source échouent en silence.
+        """
+        import unicodedata
+
+        decomposed = unicodedata.normalize("NFD", "référence.md")
+        path = tmp_path / decomposed
+        path.write_text(MD, encoding="utf-8")
+
+        document, _ = load_document(path, tmp_path)
+        assert document.source == unicodedata.normalize("NFC", "référence.md")
+
     def test_unsupported_format(self, tmp_path: Path) -> None:
         path = tmp_path / "a.zip"
         path.write_bytes(b"PK")

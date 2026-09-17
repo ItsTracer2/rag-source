@@ -10,6 +10,13 @@
 # Tous les ports sont publiés sur 127.0.0.1 uniquement : rien n'est exposé au
 # réseau local. L'accès distant passe par un tunnel SSH (cf. deploy/scaleway).
 #
+# Mémoire : les quatre services cohabitent dans la VM de Docker. Sur un poste où
+# elle est limitée (Docker Desktop alloue souvent 4 Gio par défaut), le noyau tue
+# un conteneur au moment où les trois modèles travaillent ensemble. D'où des
+# contextes dimensionnés au besoin réel plutôt qu'au maximum possible ; augmenter
+# la mémoire de Docker ou exécuter le LLM nativement (compose.native-llm.yaml)
+# lève la contrainte.
+#
 # Les contextes d'embedding et de reranking sont volontairement courts (2048) :
 # llama.cpp réserve la mémoire du contexte multipliée par le nombre de créneaux
 # parallèles. Avec 8192 et 4 créneaux, le conteneur se faisait tuer par manque de
@@ -37,7 +44,7 @@ services:
     command: >
       --model /models/${RAG_SOURCE_LLM_FILE:-qwen2.5-3b-instruct-q4_k_m.gguf}
       --host 0.0.0.0 --port 8080
-      --ctx-size ${RAG_SOURCE_LLM_CONTEXT_SIZE:-8192}
+      --ctx-size ${RAG_SOURCE_LLM_CONTEXT_SIZE:-4096}
       --parallel ${RAG_SOURCE_LLM_PARALLEL:-1}
       --threads ${RAG_SOURCE_LLM_THREADS:-4}
       --no-warmup

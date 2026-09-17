@@ -130,6 +130,62 @@ class QdrantStore:
                 "PUT", f"/collections/{self._collection}/points?wait=true", json={"points": points}
             )
 
+    def query(
+        self,
+        *,
+        dense: list[float] | None = None,
+        sparse: SparseVector | None = None,
+        limit: int = 30,
+        prefetch: int = 40,
+        source: str | None = None,
+        kind: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Recherche hybride : les deux classements sont fusionnés par Qdrant.
+
+        La fusion RRF (Reciprocal Rank Fusion) combine les *rangs*, pas les scores :
+        un score cosinus et un score BM25 ne sont pas comparables, leurs rangs si.
+        Un passage bien classé par les deux méthodes remonte ainsi devant un passage
+        excellent pour une seule.
+
+        Une seule requête HTTP fait le tout : ni le trafic ni la logique de fusion ne
+        remontent côté client.
+        """
+        if dense is None and sparse is None:
+            raise ValueError("Au moins un des deux vecteurs est requis.")
+
+        conditions = [
+            {"key": key, "match": {"value": value}}
+            for key, value in (("source", source), ("kind", kind))
+            if value is not None
+        ]
+        query_filter = {"must": conditions} if conditions else None
+
+        prefetches: list[dict[str, Any]] = []
+        if dense is not None:
+            prefetches.append({"query": dense, "using": DENSE, "limit": prefetch})
+        if sparse is not None and len(sparse) > 0:
+            prefetches.append(
+                {
+                    "query": {"indices": sparse.indices, "values": sparse.values},
+                    "using": SPARSE,
+                    "limit": prefetch,
+                }
+            )
+
+        body: dict[str, Any] = {"limit": limit, "with_payload": True}
+        if len(prefetches) == 1:
+            body.update(prefetches[0])
+        else:
+            body["prefetch"] = prefetches
+            body["query"] = {"fusion": "rrf"}
+        if query_filter is not None:
+            body["filter"] = query_filter
+
+        result = self._request("POST", f"/collections/{self._collection}/points/query", json=body)
+        assert result is not None
+        points: list[dict[str, Any]] = result["points"]
+        return points
+
     def delete_source(self, source: str) -> None:
         """Supprime tous les chunks d'un document."""
         self._request(

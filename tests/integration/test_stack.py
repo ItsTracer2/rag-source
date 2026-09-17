@@ -119,7 +119,8 @@ class TestLlm:
         except httpx.ConnectError:  # pragma: no cover
             pytest.skip("LLM injoignable.")
         context = response.json()["default_generation_settings"]["n_ctx"]
-        assert context >= 8192
+        # 4096 suffit : 2500 tokens de passages, la question, et la réponse.
+        assert context >= 4096
 
 
 class TestQdrant:

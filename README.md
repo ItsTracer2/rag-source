@@ -29,16 +29,25 @@ docker compose ps
 uv run pytest -m integration
 ```
 
-Inspecter ce que l'ingestion tire du corpus placé dans `data/` :
+Indexer le corpus placé dans `data/`, puis interroger :
 
 ```bash
-uv run python -m rag_source.ingest.report data --chunks
+uv run python -m rag_source.ingest.report data --chunks   # ce que l'ingestion extrait
+uv run python -m rag_source.ingest data                    # indexation (incrémentale)
+uv run python -m rag_source.eval                           # qualité de la recherche
 ```
 
 ### Profils de modèle
 
 `./scripts/fetch-models.sh medium` (7B) ou `large` (14B), puis renseigner
 `RAG_SOURCE_LLM_FILE` dans `.env`. Voir `models.lock`.
+
+### Mémoire Docker
+
+Les quatre services cohabitent dans la VM de Docker. Avec moins de 6 Gio alloués,
+le noyau peut tuer un conteneur quand les trois modèles travaillent en même temps
+(symptôme : un service qui redémarre seul en pleine indexation). Augmenter la
+mémoire dans Docker Desktop, ou exécuter le LLM nativement — ci-dessous.
 
 ### macOS : LLM natif (Metal)
 

@@ -8,6 +8,7 @@ d'exécution, ce qui rendait les échecs faciles à manquer.
 from __future__ import annotations
 
 import hashlib
+import unicodedata
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -39,6 +40,18 @@ def iter_corpus(root: Path) -> Iterator[Path]:
         yield path
 
 
+def relative_source(path: Path, root: Path) -> str:
+    """Identifiant stable d'un document : son chemin relatif, normalisé en NFC.
+
+    macOS enregistre les noms de fichiers en forme décomposée (« é » = « e » + accent
+    combinant), Linux et les fichiers de configuration écrits à la main utilisent la
+    forme composée. Les deux s'affichent de façon identique mais ne sont pas égales :
+    sans normalisation, un filtre par source ou un jeu d'évaluation cesse
+    silencieusement de correspondre selon la machine.
+    """
+    return unicodedata.normalize("NFC", path.relative_to(root).as_posix())
+
+
 def load_document(path: Path, root: Path) -> tuple[LoadedDocument, tuple[str, ...]]:
     """Charge un fichier et renvoie le document normalisé et ses avertissements."""
     loader = loader_for(path)
@@ -46,7 +59,7 @@ def load_document(path: Path, root: Path) -> tuple[LoadedDocument, tuple[str, ..
         raise LoaderError(f"Format non géré : {path.suffix}")
     extracted = loader.load(path)
     document = LoadedDocument(
-        source=path.relative_to(root).as_posix(),
+        source=relative_source(path, root),
         sha256=file_sha256(path),
         format=loader.format,
         title=extracted.title,
@@ -78,7 +91,7 @@ def load_corpus(root: Path) -> CorpusReport:
         raise FileNotFoundError(f"Dossier de corpus introuvable : {root}")
     report = CorpusReport()
     for path in iter_corpus(root):
-        source = path.relative_to(root).as_posix()
+        source = relative_source(path, root)
         try:
             document, warnings = load_document(path, root)
         except (LoaderError, OSError) as exc:
