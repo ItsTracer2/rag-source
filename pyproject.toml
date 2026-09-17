@@ -5,8 +5,11 @@ description = "RAG souverain et auto-hébergé : réponses sourcées et citées 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "markdown-it-py>=4.2.0",
+    "openpyxl>=3.1.5",
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
+    "pymupdf>=1.28.2",
 ]
 
 [dependency-groups]
@@ -15,6 +18,7 @@ dev = [
     "pre-commit>=4.0",
     "pytest>=8.3",
     "ruff>=0.8",
+    "types-openpyxl>=3.1.5.20260827",
 ]
 
 [build-system]
@@ -42,6 +46,13 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
+
+# PyMuPDF n'expose que des annotations partielles : ses appels sont non typés du
+# point de vue de mypy. On lève la contrainte pour ce seul module plutôt que
+# d'affaiblir le mode strict sur tout le projet.
+[[tool.mypy.overrides]]
+module = ["rag_source.ingest.loaders.pdf", "tests.unit.conftest", "tests.unit.test_loader_pdf"]
+disable_error_code = ["no-untyped-call", "attr-defined"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
