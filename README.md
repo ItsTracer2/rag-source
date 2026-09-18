@@ -31,8 +31,27 @@ métier ou documentation réglementaire, en français comme en anglais.
 
 ---
 
+## Par où commencer
+
+Le dépôt compte une centaine de fichiers ; six suffisent à comprendre le système.
+Dans cet ordre, comptez une dizaine de minutes :
+
+| | Fichier | Ce qu'on y voit |
+|---|---|---|
+| 1 | [`retrieval/search.py`](src/rag_source/retrieval/search.py) (224 l.) | la chaîne complète : recherche hybride, reclassement, seuil de pertinence, budget de contexte |
+| 2 | [`generation/prompts.py`](src/rag_source/generation/prompts.py) (126 l.) | comment une citation devient vérifiable, et pourquoi le modèle a le droit de ne pas savoir |
+| 3 | [`ingest/indexer.py`](src/rag_source/ingest/indexer.py) (173 l.) | pourquoi un document modifié ne laisse jamais de contenu périmé dans l'index |
+| 4 | [`ingest/loaders/base.py`](src/rag_source/ingest/loaders/base.py) (61 l.) | le registre qui rend l'ajout d'un format local à un seul fichier |
+| 5 | [ADR 0007](docs/adr/0007-recherche-hybride-et-evaluation.md) | comment les réglages ont été choisis par la mesure — y compris contre l'intuition |
+| 6 | [`tests/unit/test_search.py`](tests/unit/test_search.py) (198 l.) | ce que le système garantit, écrit sous forme exécutable |
+
+Le reste du code est de la même facture : 31 modules, 124 lignes en moyenne.
+
+---
+
 ## Sommaire
 
+- [Par où commencer](#par-où-commencer)
 - [Ce qui distingue ce projet](#ce-qui-distingue-ce-projet)
 - [Architecture](#architecture)
 - [Prérequis](#prérequis)
