@@ -1,0 +1,19 @@
+# Copier vers terraform.tfvars puis compléter.
+# Aucun secret ici : les identifiants Scaleway passent par l'environnement
+# (cf. env.example) et les jetons de l'application sont générés sur la VM.
+
+# Clé SSH autorisée : le contenu, pas un chemin.
+#   cat ~/.ssh/id_ed25519.pub
+ssh_public_key = "ssh-ed25519 AAAA... moi@machine"
+
+# Adresse autorisée à ouvrir une session SSH.
+#   curl -s https://ifconfig.me
+allowed_ssh_cidr = "203.0.113.5/32"
+
+# Gabarit et modèle. PRO2-S (4 vCPU / 16 Go) convient au profil « medium » (7B).
+instance_type = "PRO2-S"
+llm_profile   = "medium"
+llm_file      = "Qwen2.5-7B-Instruct-Q4_K_M.gguf"
+
+# zone                = "fr-par-1"
+# data_volume_size_gb = 50

@@ -1,0 +1,122 @@
+#cloud-config
+# Préparation de la VM RAG-Source.
+#
+# Ce fichier est versionné dans le dépôt : la construction de la machine est
+# lisible et reproductible, sans dépendre d'un module externe ni d'une image
+# préparée à la main. Le projet d'origine dépendait d'un module GitLab privé —
+# inaccessible, donc non reproductible.
+#
+# Les secrets de l'application sont générés ici, sur la VM : ils n'apparaissent
+# donc jamais dans l'état OpenTofu.
+
+timezone: ${timezone}
+package_update: true
+package_upgrade: true
+
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - rsync
+  - jq
+
+users:
+  - name: ${vm_username}
+    groups: [sudo, docker]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+write_files:
+  # Le volume de données est monté au démarrage, quel que soit son nom de
+  # périphérique : celui-ci peut changer d'un redémarrage à l'autre.
+  - path: /usr/local/sbin/mount-data-volume.sh
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # Monte le volume persistant sur /data, en le formatant à la première fois.
+      set -euo pipefail
+      target=/data
+      mkdir -p "$target"
+
+      device=""
+      for candidate in /dev/sd[b-z] /dev/vd[b-z] /dev/nvme[1-9]n1; do
+          [ -b "$candidate" ] || continue
+          # On ignore le disque système, reconnaissable à sa partition racine.
+          if lsblk -no MOUNTPOINT "$candidate" | grep -q '^/$'; then continue; fi
+          device="$candidate"
+          break
+      done
+      [ -n "$device" ] || { echo "Aucun volume de données trouvé." >&2; exit 1; }
+
+      if ! blkid "$device" >/dev/null 2>&1; then
+          echo "Formatage de $device (première utilisation)."
+          mkfs.ext4 -F -L ragdata "$device"
+      fi
+      grep -q "LABEL=ragdata" /etc/fstab || echo "LABEL=ragdata $target ext4 defaults,nofail 0 2" >> /etc/fstab
+      mount -a
+      mkdir -p "$target"/{models,data,qdrant}
+      chown -R ${vm_username}:${vm_username} "$target"
+
+  - path: /etc/systemd/system/rag-data.service
+    content: |
+      [Unit]
+      Description=Montage du volume de données RAG-Source
+      Before=docker.service
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/usr/local/sbin/mount-data-volume.sh
+      [Install]
+      WantedBy=multi-user.target
+
+  # Configuration de l'application. Le profil serveur impose le LLM local : ici,
+  # contrairement au poste de développement, la souveraineté n'est pas optionnelle.
+  - path: /usr/local/sbin/write-rag-env.sh
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      env_file=/opt/rag-source/.env
+      [ -f "$env_file" ] && exit 0   # ne jamais régénérer des secrets existants
+      mkdir -p /opt/rag-source
+      cat > "$env_file" <<ENV
+      # Généré sur la VM au premier démarrage. Ne pas commiter.
+      RAG_SOURCE_API_TOKEN=$(openssl rand -hex 32)
+      RAG_SOURCE_QDRANT_API_KEY=$(openssl rand -hex 32)
+
+      # Déploiement souverain : le démarrage échoue si le LLM n'est pas local.
+      RAG_SOURCE_REQUIRE_LOCAL_LLM=true
+
+      RAG_SOURCE_MODELS_DIR=/data/models
+      RAG_SOURCE_DATA_DIR=/data/data
+      RAG_SOURCE_LLM_FILE=${llm_file}
+      RAG_SOURCE_LLM_PROFILE=${llm_profile}
+
+      # Vues depuis la machine hôte (scripts d'indexation et d'évaluation).
+      RAG_SOURCE_EMBED_URL=http://127.0.0.1:8082
+      RAG_SOURCE_RERANK_URL=http://127.0.0.1:8083
+      RAG_SOURCE_LLM_BASE_URL=http://127.0.0.1:8081/v1
+      RAG_SOURCE_QDRANT_URL=http://127.0.0.1:6333
+      ENV
+      chmod 600 "$env_file"
+      chown -R ${vm_username}:${vm_username} /opt/rag-source
+
+runcmd:
+  # Docker depuis le dépôt officiel : la version de Debian est trop ancienne pour
+  # le plugin compose v2.
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - usermod -aG docker ${vm_username}
+  - systemctl enable --now rag-data.service
+  - /usr/local/sbin/write-rag-env.sh
+  - systemctl enable --now docker
+  - touch /var/lib/cloud/rag-source-ready
+
+final_message: "RAG-Source : VM prête en $UPTIME s. Déployer l'application avec ./scripts/up.sh."

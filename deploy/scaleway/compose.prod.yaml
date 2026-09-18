@@ -1,0 +1,49 @@
+# Ajustements du déploiement serveur, appliqués par-dessus compose.yaml.
+#
+#   docker compose -f compose.yaml -f deploy/scaleway/compose.prod.yaml up -d
+#
+# Différences avec le poste de développement :
+#
+#   - le LLM tourne en conteneur (sur un serveur Linux, pas de GPU Metal à viser) ;
+#   - modèles, corpus et index vivent sur le volume persistant monté sur /data ;
+#   - la souveraineté est imposée : le démarrage échoue si le LLM n'est pas local ;
+#   - les contextes et le parallélisme profitent de la mémoire disponible.
+
+services:
+  llm:
+    volumes:
+      - /data/models:/models:ro
+    command: >
+      --model /models/${RAG_SOURCE_LLM_FILE:-Qwen2.5-7B-Instruct-Q4_K_M.gguf}
+      --host 0.0.0.0 --port 8080
+      --ctx-size ${RAG_SOURCE_LLM_CONTEXT_SIZE:-8192}
+      --parallel ${RAG_SOURCE_LLM_PARALLEL:-2}
+      --threads ${RAG_SOURCE_LLM_THREADS:-4}
+      --no-warmup
+
+  embed:
+    volumes:
+      - /data/models:/models:ro
+
+  rerank:
+    volumes:
+      - /data/models:/models:ro
+
+  qdrant:
+    volumes:
+      - /data/qdrant:/qdrant/storage
+
+  api:
+    environment:
+      # Sur le serveur, le LLM est un conteneur voisin : plus de host.docker.internal.
+      RAG_SOURCE_LLM_BASE_URL: http://llm:8080/v1
+      # Le refus de démarrer avec un LLM externe est la garantie du profil serveur.
+      RAG_SOURCE_REQUIRE_LOCAL_LLM: "true"
+      RAG_SOURCE_MODELS_DIR: /models
+      RAG_SOURCE_DATA_DIR: /data
+    volumes:
+      - /data/models:/models:ro
+      - /data/data:/data:ro
+    depends_on:
+      llm:
+        condition: service_healthy

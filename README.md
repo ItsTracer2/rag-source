@@ -82,6 +82,21 @@ llama-server --model models/qwen2.5-3b-instruct-q4_k_m.gguf --port 8081 --ctx-si
 docker compose -f compose.yaml -f compose.native-llm.yaml up -d
 ```
 
+## Déploiement sur un serveur
+
+Un profil Scaleway (France) est fourni dans [`deploy/scaleway/`](deploy/scaleway/) :
+instance provisionnée par OpenTofu, données sur un volume persistant, aucun port
+applicatif ouvert — l'accès passe par un tunnel SSH — et LLM local imposé.
+
+```bash
+cd deploy/scaleway
+cp env.example .env && source .env            # identifiants Scaleway
+cp terraform.tfvars.example terraform.tfvars  # clé SSH, adresse autorisée
+./scripts/up.sh
+```
+
+Voir [`deploy/scaleway/README.md`](deploy/scaleway/README.md).
+
 ## Développement
 
 ```bash
