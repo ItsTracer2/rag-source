@@ -21,6 +21,8 @@ from rag_source.api.dependencies import Authenticated, ServicesDep, build_servic
 from rag_source.api.schemas import (
     AskRequest,
     AskResponse,
+    DocumentOut,
+    DocumentsResponse,
     HealthResponse,
     PassageOut,
     SearchRequest,
@@ -91,6 +93,19 @@ def health(services: ServicesDep) -> HealthResponse:
         collection=settings.qdrant_collection,
         indexed_chunks=chunks,
         services=checks,
+    )
+
+
+@router.get("/v1/documents", response_model=DocumentsResponse, tags=["recherche"])
+def documents(services: ServicesDep) -> DocumentsResponse:
+    """Documents indexés, pour filtrer une recherche ou vérifier ce qui est en base."""
+    try:
+        counts = services.store.sources()
+    except StoreError as exc:
+        raise _unavailable(exc) from exc
+    return DocumentsResponse(
+        documents=[DocumentOut(source=source, chunks=chunks) for source, chunks in counts.items()],
+        total_chunks=sum(counts.values()),
     )
 
 

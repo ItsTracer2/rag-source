@@ -210,6 +210,15 @@ class QdrantStore:
                 versions.setdefault(source, sha)
         return versions
 
+    def sources(self) -> dict[str, int]:
+        """Documents indexés et nombre de chunks de chacun."""
+        counts: dict[str, int] = {}
+        for payload in self._scroll(("source",)):
+            source = payload.get("source")
+            if isinstance(source, str):
+                counts[source] = counts.get(source, 0) + 1
+        return dict(sorted(counts.items()))
+
     def _scroll(self, fields: tuple[str, ...]) -> Iterator[dict[str, Any]]:
         offset: Any = None
         while True:

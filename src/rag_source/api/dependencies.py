@@ -79,9 +79,7 @@ def build_services(settings: Settings) -> Services:
 
 def _build_llm(settings: Settings) -> ChatClient:
     if settings.llm_provider is not LLMProvider.LOCAL:
-        # Les fournisseurs externes arrivent à l'étape dédiée ; d'ici là, tout passe
-        # par l'API compatible OpenAI, que la plupart d'entre eux exposent aussi.
-        logger.info("Fournisseur LLM : %s", settings.llm_provider)
+        logger.info("Fournisseur LLM externe : %s", settings.llm_base_url)
     return OpenAICompatibleClient(
         settings.llm_base_url,
         model=settings.llm_model,

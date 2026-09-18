@@ -1,8 +1,9 @@
 # Pile locale de RAG-Source.
 #
 #   ./scripts/fetch-models.sh && docker compose up -d
+#   puis http://127.0.0.1:8080
 #
-# Trois serveurs de modèles et une base vectorielle. Les trois serveurs partagent
+# Trois serveurs de modèles, une base vectorielle, l'API et l'interface. Les trois serveurs partagent
 # la même image llama.cpp avec des arguments différents : un seul runtime à
 # connaître, à mettre à jour et à dépanner, et surtout aucun PyTorch — c'est ce qui
 # rend l'image de l'API légère et son installation immédiate.
@@ -103,6 +104,56 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  # ── API RAG-Source ──────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: unless-stopped
+    environment:
+      # Depuis un conteneur, les services se joignent par leur nom : les valeurs du
+      # .env décrivent le point de vue de la machine hôte et ne conviennent pas ici.
+      RAG_SOURCE_EMBED_URL: http://embed:8080
+      RAG_SOURCE_RERANK_URL: http://rerank:8080
+      RAG_SOURCE_LLM_BASE_URL: ${RAG_SOURCE_API_LLM_URL:-http://host.docker.internal:8081/v1}
+      RAG_SOURCE_QDRANT_URL: http://qdrant:6333
+      RAG_SOURCE_QDRANT_API_KEY: ${RAG_SOURCE_QDRANT_API_KEY:?lancer ./scripts/init-env.sh}
+      RAG_SOURCE_API_TOKEN: ${RAG_SOURCE_API_TOKEN:?lancer ./scripts/init-env.sh}
+      RAG_SOURCE_QDRANT_COLLECTION: ${RAG_SOURCE_QDRANT_COLLECTION:-rag_source}
+      RAG_SOURCE_MODELS_DIR: /models
+      RAG_SOURCE_DATA_DIR: /data
+    volumes:
+      - ./models:/models:ro
+      - ./data:/data:ro
+    extra_hosts:
+      # Permet de viser un llama-server lancé nativement sur l'hôte (macOS, Metal).
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      embed:
+        condition: service_healthy
+      rerank:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  # ── Interface web ───────────────────────────────────────────────────────────
+  ui:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      # Caddy porte le jeton : la page n'a aucun secret à stocker.
+      RAG_SOURCE_API_TOKEN: ${RAG_SOURCE_API_TOKEN:?lancer ./scripts/init-env.sh}
+      RAG_SOURCE_API_URL: http://api:8000
+    volumes:
+      - ./ui/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./ui:/srv:ro
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:8080:8080"
 
 volumes:
   qdrant-storage:

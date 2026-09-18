@@ -122,6 +122,16 @@ class AskResponse(BaseModel):
         )
 
 
+class DocumentOut(BaseModel):
+    source: str
+    chunks: int
+
+
+class DocumentsResponse(BaseModel):
+    documents: list[DocumentOut]
+    total_chunks: int
+
+
 class ServiceHealth(BaseModel):
     name: str
     reachable: bool

@@ -83,6 +83,11 @@ class FakeStore:
             raise self._error
         return self._count
 
+    def sources(self) -> dict[str, int]:
+        if self._error:
+            raise self._error
+        return {"manuel.pdf": 5, "guide.md": 2}
+
 
 class FakeModelClient:
     def embed(self, texts: Any) -> list[list[float]]:
@@ -151,6 +156,20 @@ class TestHealth:
         assert body["indexed_chunks"] is None
         qdrant = next(s for s in body["services"] if s["name"] == "qdrant")
         assert qdrant["reachable"] is False and "hors service" in qdrant["detail"]
+
+
+class TestDocuments:
+    def test_lists_indexed_documents(self) -> None:
+        body = make_client().get("/v1/documents").json()
+        assert body["total_chunks"] == 7
+        assert body["documents"] == [
+            {"source": "manuel.pdf", "chunks": 5},
+            {"source": "guide.md", "chunks": 2},
+        ]
+
+    def test_store_failure_returns_503(self) -> None:
+        client = make_client(store=FakeStore(error=StoreError("base injoignable")))
+        assert client.get("/v1/documents").status_code == 503
 
 
 class TestSearch:

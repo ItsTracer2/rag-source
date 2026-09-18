@@ -11,7 +11,7 @@ interroger une notice d'électroménager. Deux situations envoient malgré tout 
 extraits du corpus à un tiers, et le système sait toujours dire laquelle s'applique
 (:attr:`Settings.sovereignty`, exposée par ``/health`` et par l'interface) :
 
-1. un fournisseur LLM externe (``llm_provider != "local"``) ;
+1. un fournisseur LLM externe (``llm_provider = "external"``) ;
 2. un fournisseur « local » dont l'URL pointe en fait vers un hôte public.
 
 Le **profil de déploiement Scaleway** pose ``RAG_SOURCE_REQUIRE_LOCAL_LLM=true`` :
@@ -40,8 +40,12 @@ _PRIVATE_DNS_SUFFIXES = (".local", ".internal", ".localhost", ".lan", ".home.arp
 class LLMProvider(StrEnum):
     LOCAL = "local"
     """Serveur compatible OpenAI auto-hébergé (llama-server par défaut)."""
-    ANTHROPIC = "anthropic"
-    """API Claude : les extraits du corpus sont envoyés à Anthropic."""
+    EXTERNAL = "external"
+    """Service tiers exposant une API compatible OpenAI (Claude, Mistral, OpenAI…).
+
+    Il n'existe pas de client dédié par fournisseur : la quasi-totalité d'entre eux
+    exposent une API compatible OpenAI, et en écrire un par service ajouterait du
+    code à maintenir sans rien apporter. Seuls changent l'URL et la clé."""
 
 
 class Sovereignty(StrEnum):
@@ -141,8 +145,8 @@ class Settings(BaseSettings):
                 "Des extraits du corpus quitteraient l'hôte. Pour l'accepter en "
                 f"connaissance de cause, définir RAG_SOURCE_ALLOW_EXTERNAL_LLM={EXTERNAL_LLM_ACK}"
             )
-        if self.llm_provider is LLMProvider.ANTHROPIC and self.llm_api_key is None:
-            raise ValueError("RAG_SOURCE_LLM_API_KEY est requis pour le fournisseur 'anthropic'.")
+        if self.llm_provider is LLMProvider.EXTERNAL and self.llm_api_key is None:
+            raise ValueError("RAG_SOURCE_LLM_API_KEY est requis pour le fournisseur 'external'.")
         return self
 
     @property

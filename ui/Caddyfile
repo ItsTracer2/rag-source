@@ -1,0 +1,44 @@
+# Caddy sert l'interface et relaie l'API.
+#
+# Deux raisons à ce reverse proxy plutôt qu'un appel direct du navigateur :
+#
+# 1. **Le jeton ne passe jamais par le navigateur.** Caddy l'ajoute côté serveur ;
+#    la page n'a donc aucun secret à stocker, et il n'y a rien à voler dans le
+#    localStorage ni dans le code source de la page.
+# 2. Même origine pour la page et l'API : pas de CORS à configurer.
+#
+# Conséquence assumée : quiconque atteint ce port atteint l'API. C'est pourquoi le
+# port n'est publié que sur 127.0.0.1, et que l'accès distant passe par un tunnel
+# SSH (cf. deploy/scaleway).
+
+:8080 {
+	encode gzip
+
+	handle /health {
+		reverse_proxy {$RAG_SOURCE_API_URL:http://api:8000} {
+			header_up Authorization "Bearer {$RAG_SOURCE_API_TOKEN}"
+		}
+	}
+
+	handle /v1/* {
+		reverse_proxy {$RAG_SOURCE_API_URL:http://api:8000} {
+			header_up Authorization "Bearer {$RAG_SOURCE_API_TOKEN}"
+			# Le flux SSE doit arriver au fil de l'eau, pas d'un bloc à la fin.
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		# La page ne charge que ses propres ressources : aucune dépendance externe,
+		# donc aucune raison d'autoriser autre chose.
+		Content-Security-Policy "default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+	}
+}

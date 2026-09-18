@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RAG-Source</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="title">
+        <h1>RAG-Source</h1>
+        <p class="subtitle">Réponses sourcées sur vos documents</p>
+      </div>
+      <div class="status">
+        <span id="sovereignty" class="badge" title="Où partent les données">…</span>
+        <span id="corpus" class="meta">…</span>
+      </div>
+    </header>
+
+    <main>
+      <form id="ask-form" autocomplete="off">
+        <label class="visually-hidden" for="question">Votre question</label>
+        <textarea
+          id="question"
+          name="question"
+          rows="2"
+          placeholder="Posez une question sur vos documents…"
+          required
+        ></textarea>
+        <div class="controls">
+          <label for="source">Document</label>
+          <select id="source" name="source">
+            <option value="">Tous</option>
+          </select>
+          <label for="mode">Recherche</label>
+          <select id="mode" name="mode">
+            <option value="hybrid+rerank">Hybride + reclassement</option>
+            <option value="hybrid">Hybride</option>
+            <option value="dense">Sémantique</option>
+            <option value="sparse">Mots-clés</option>
+          </select>
+          <button type="submit" id="submit">Demander</button>
+          <button type="button" id="reset" class="ghost" title="Effacer la conversation">
+            Effacer
+          </button>
+        </div>
+      </form>
+
+      <p id="error" class="error" hidden></p>
+      <section id="thread" class="thread" aria-live="polite"></section>
+    </main>
+
+    <template id="exchange-template">
+      <article class="exchange">
+        <p class="question"></p>
+        <div class="answer">
+          <div class="answer-text"></div>
+          <p class="status-line"></p>
+        </div>
+        <details class="sources" open>
+          <summary><span class="count"></span></summary>
+          <ol class="passages"></ol>
+        </details>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -19,7 +19,14 @@ de déploiement Scaleway l'impose.
 uv sync                      # dépendances Python (versions verrouillées)
 ./scripts/init-env.sh        # .env local + secrets générés
 ./scripts/fetch-models.sh    # modèles GGUF vérifiés par empreinte (~3,4 Go)
-docker compose up -d         # llm, embed, rerank, qdrant
+docker compose up -d         # llm, embed, rerank, qdrant, api, interface
+```
+
+Indexer le corpus placé dans `data/`, puis ouvrir l'interface :
+
+```bash
+uv run python -m rag_source.ingest data   # indexation (incrémentale)
+open http://127.0.0.1:8080
 ```
 
 Vérifier la pile :
@@ -29,14 +36,10 @@ docker compose ps
 uv run pytest -m integration
 ```
 
-Indexer le corpus placé dans `data/`, puis lancer l'API :
+### Interroger l'API directement
 
-```bash
-uv run python -m rag_source.ingest data              # indexation (incrémentale)
-uv run uvicorn rag_source.api.app:app --port 8000    # API
-```
-
-Interroger (le jeton est dans `.env`) :
+Le jeton est dans `.env` (l'interface web, elle, n'en a pas besoin : Caddy le
+fournit pour elle).
 
 ```bash
 TOKEN=$(grep RAG_SOURCE_API_TOKEN .env | cut -d= -f2)

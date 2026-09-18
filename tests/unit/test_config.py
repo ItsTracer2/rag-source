@@ -68,18 +68,18 @@ class TestSovereignty:
 
     def test_external_provider_allowed_by_default(self) -> None:
         """Outil générique : un LLM externe est permis, mais toujours signalé."""
-        settings = make(llm_provider="anthropic", llm_api_key="sk-test")
+        settings = make(llm_provider="external", llm_api_key="sk-test")
         assert settings.sovereignty is Sovereignty.EXTERNAL
 
     def test_external_provider_refused_when_local_required(self) -> None:
         with pytest.raises(ValidationError, match="souverain"):
-            make(require_local_llm=True, llm_provider="anthropic", llm_api_key="sk-test")
+            make(require_local_llm=True, llm_provider="external", llm_api_key="sk-test")
 
     def test_wrong_acknowledgement_is_refused(self) -> None:
         with pytest.raises(ValidationError, match="souverain"):
             make(
                 require_local_llm=True,
-                llm_provider="anthropic",
+                llm_provider="external",
                 llm_api_key="sk-test",
                 allow_external_llm="true",
             )
@@ -87,7 +87,7 @@ class TestSovereignty:
     def test_exact_acknowledgement_is_accepted(self) -> None:
         settings = make(
             require_local_llm=True,
-            llm_provider="anthropic",
+            llm_provider="external",
             llm_api_key="sk-test",
             allow_external_llm=EXTERNAL_LLM_ACK,
         )
@@ -101,7 +101,7 @@ class TestSovereignty:
 
     def test_anthropic_requires_api_key(self) -> None:
         with pytest.raises(ValidationError, match="LLM_API_KEY"):
-            make(llm_provider="anthropic")
+            make(llm_provider="external")
 
 
 def test_reads_prefixed_environment(monkeypatch: pytest.MonkeyPatch) -> None:
