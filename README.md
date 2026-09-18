@@ -29,12 +29,32 @@ docker compose ps
 uv run pytest -m integration
 ```
 
-Indexer le corpus placé dans `data/`, puis interroger :
+Indexer le corpus placé dans `data/`, puis lancer l'API :
+
+```bash
+uv run python -m rag_source.ingest data              # indexation (incrémentale)
+uv run uvicorn rag_source.api.app:app --port 8000    # API
+```
+
+Interroger (le jeton est dans `.env`) :
+
+```bash
+TOKEN=$(grep RAG_SOURCE_API_TOKEN .env | cut -d= -f2)
+
+curl -s localhost:8000/health -H "Authorization: Bearer $TOKEN"
+
+curl -s -X POST localhost:8000/v1/ask \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"question": "Votre question ?"}'
+```
+
+Documentation interactive de l'API : <http://localhost:8000/docs>.
+
+Autres outils :
 
 ```bash
 uv run python -m rag_source.ingest.report data --chunks   # ce que l'ingestion extrait
-uv run python -m rag_source.ingest data                    # indexation (incrémentale)
-uv run python -m rag_source.eval                           # qualité de la recherche
+uv run python -m rag_source.eval                          # qualité de la recherche
 ```
 
 ### Profils de modèle
