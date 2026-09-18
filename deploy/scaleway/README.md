@@ -39,7 +39,7 @@ Ensuite :
 
 ```bash
 ./scripts/push-data.sh          # envoie data/ vers le volume persistant
-ssh <vm> 'cd /opt/rag-source && docker compose exec -T api python -m rag_source.ingest /data'
+ssh <vm> 'cd /opt/rag-source && docker compose exec -T api rag-source ingest /data'
 ./scripts/tunnel.sh             # puis http://127.0.0.1:8080
 ```
 

@@ -18,6 +18,9 @@ dependencies = [
     "uvicorn[standard]>=0.53.0",
 ]
 
+[project.scripts]
+rag-source = "rag_source.cli:main"
+
 [dependency-groups]
 dev = [
     "mypy>=1.13",

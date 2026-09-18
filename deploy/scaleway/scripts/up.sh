@@ -71,7 +71,7 @@ cat <<EOF
 ✅ RAG-Source déployé.
 
   Pousser des documents   ./deploy/scaleway/scripts/push-data.sh
-  Indexer                 ssh $TARGET 'cd /opt/rag-source && docker compose exec api python -m rag_source.ingest /data'
+  Indexer                 ssh $TARGET 'cd /opt/rag-source && docker compose exec api rag-source ingest /data'
   Ouvrir l'interface      ./deploy/scaleway/scripts/tunnel.sh
   Sauvegarder l'index     ./deploy/scaleway/scripts/backup.sh
   Éteindre                ./deploy/scaleway/scripts/down.sh

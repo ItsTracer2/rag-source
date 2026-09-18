@@ -19,7 +19,7 @@ sous-dossier, et les fichiers Markdown et Excel n'étaient pas gérés du tout.
    HTML plus tard ne touchera aucun autre fichier du pipeline.
 2. **Parcours récursif**, ordre stable, fichiers cachés et verrous Office ignorés.
 3. **Un échec n'arrête pas le traitement** : il est consigné dans un rapport
-   (`CorpusReport`), consultable via `python -m rag_source.ingest.report`.
+   (`CorpusReport`), consultable via `rag-source inspect` (à l'époque `python -m rag_source.ingest.report`).
 4. **PDF (PyMuPDF)** : titres détectés par le style (taille et graisse relatives au
    corps de texte), tableaux extraits en Markdown, en-têtes et pieds de page
    retirés par répétition, sommaires imprimés et pages de garde écartés, titres

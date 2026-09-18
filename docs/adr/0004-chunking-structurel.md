@@ -39,7 +39,7 @@ aux limites de page et dépendait de `langchain-experimental`.
 
 Corpus de référence : 941 sections donnent 1 160 chunks — médiane 136 tokens,
 moyenne 248, maximum 694 (prose 429, tableaux 153, enregistrements 578). Aucun
-dépassement de la limite, vérifiable par `python -m rag_source.ingest.report data --chunks`.
+dépassement de la limite, vérifiable par `rag-source inspect data`.
 
 La médiane est basse parce que les enregistrements (une recommandation, une
 référence de pièce) sont courts par nature : c'est le comportement recherché, un

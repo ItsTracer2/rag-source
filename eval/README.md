@@ -5,13 +5,13 @@ métriques déterministes, sans faire intervenir de LLM : les chiffres sont
 reproductibles, rapides à obtenir, et disent *où* le système échoue.
 
 ```bash
-uv run python -m rag_source.eval                                  # tous les modes
-uv run python -m rag_source.eval --mode hybrid+rerank --failures  # détail des ratés
-uv run python -m rag_source.eval --mode hybrid+rerank --candidates 12
+uv run rag-source eval                                  # tous les modes
+uv run rag-source eval --mode hybrid+rerank --failures  # détail des ratés
+uv run rag-source eval --mode hybrid+rerank --candidates 12
 ```
 
 Prérequis : la pile démarrée (`docker compose up -d`) et le corpus indexé
-(`uv run python -m rag_source.ingest data`).
+(`uv run rag-source ingest data`).
 
 ## Métriques
 

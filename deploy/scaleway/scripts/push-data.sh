@@ -23,4 +23,4 @@ rsync -az --delete --info=stats1 \
 
 echo ""
 echo "Indexer maintenant :"
-echo "  ssh $TARGET 'cd /opt/rag-source && docker compose exec -T api python -m rag_source.ingest /data'"
+echo "  ssh $TARGET 'cd /opt/rag-source && docker compose exec -T api rag-source ingest /data'"

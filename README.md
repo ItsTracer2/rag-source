@@ -25,7 +25,7 @@ docker compose up -d         # llm, embed, rerank, qdrant, api, interface
 Indexer le corpus placé dans `data/`, puis ouvrir l'interface :
 
 ```bash
-uv run python -m rag_source.ingest data   # indexation (incrémentale)
+uv run rag-source ingest data    # indexation (incrémentale)
 open http://127.0.0.1:8080
 ```
 
@@ -36,6 +36,25 @@ docker compose ps
 uv run pytest -m integration
 ```
 
+### En ligne de commande
+
+```bash
+uv run rag-source health                      # services et souveraineté
+uv run rag-source docs                        # documents indexés
+uv run rag-source ask "Votre question ?"      # réponse citée, en flux
+uv run rag-source search "mots clés"          # passages seuls, sans génération
+uv run rag-source inspect data --sample       # ce que l'ingestion extrait
+uv run rag-source eval                        # qualité de la recherche
+```
+
+Les commandes `health`, `docs`, `ask` et `search` passent par l'API : elles
+fonctionnent donc aussi à travers un tunnel SSH. Les commandes `ingest`, `inspect`
+et `eval` travaillent en local, parce qu'elles lisent le corpus sur disque.
+
+Chaque commande renvoie un code de retour exploitable (`0` succès, `1` résultat
+vide ou service dégradé, `2` erreur), et accepte `--json` pour une sortie
+machine.
+
 ### Interroger l'API directement
 
 Le jeton est dans `.env` (l'interface web, elle, n'en a pas besoin : Caddy le
@@ -44,21 +63,12 @@ fournit pour elle).
 ```bash
 TOKEN=$(grep RAG_SOURCE_API_TOKEN .env | cut -d= -f2)
 
-curl -s localhost:8000/health -H "Authorization: Bearer $TOKEN"
-
 curl -s -X POST localhost:8000/v1/ask \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"question": "Votre question ?"}'
 ```
 
-Documentation interactive de l'API : <http://localhost:8000/docs>.
-
-Autres outils :
-
-```bash
-uv run python -m rag_source.ingest.report data --chunks   # ce que l'ingestion extrait
-uv run python -m rag_source.eval                          # qualité de la recherche
-```
+Documentation interactive : <http://localhost:8000/docs>.
 
 ### Profils de modèle
 
