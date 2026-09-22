@@ -1,4 +1,4 @@
-# ADR 0003 — Outil générique, souveraineté propre au déploiement
+# ADR 0003 : Outil générique, souveraineté propre au déploiement
 
 - Statut : accepté
 - Date : 2026-09-17

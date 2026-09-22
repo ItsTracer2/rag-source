@@ -1,4 +1,4 @@
-# ADR 0007 — Recherche hybride, reranking, et mesure avant réglage
+# ADR 0007 : Recherche hybride, reranking, et mesure avant réglage
 
 - Statut : accepté
 - Date : 2026-09-17
@@ -6,8 +6,8 @@
 ## Contexte
 
 L'implémentation d'origine faisait une recherche vectorielle seule (k=20), puis un
-reclassement par `ms-marco-MiniLM-L-6-v2` — un modèle entraîné uniquement sur de
-l'anglais, appliqué à un corpus français — et gardait les 4 premiers passages, sans
+reclassement par `ms-marco-MiniLM-L-6-v2` (un modèle entraîné uniquement sur de
+l'anglais, appliqué à un corpus français) et gardait les 4 premiers passages, sans
 seuil ni budget de contexte. Sa seule évaluation demandait à un LLM de 3 milliards
 de paramètres de juger ses propres réponses : lent, coûteux, peu fiable, et surtout
 incapable de dire *où* le système échoue.
@@ -25,8 +25,8 @@ incapable de dire *où* le système échoue.
    du LLM.
 5. **Banc d'évaluation déterministe, sans LLM** : hit@k, recall@k, MRR, et deux
    mesures d'abstention. Le jeu de référence compte 30 questions écrites à la main à
-   partir du corpus — identifiants exacts, questions reformulées, tableaux,
-   acronymes, plusieurs formats — dont 3 sans réponse dans le corpus.
+   partir du corpus (identifiants exacts, questions reformulées, tableaux,
+   acronymes, plusieurs formats), dont 3 sans réponse dans le corpus.
 
 ## Mesures
 
@@ -51,7 +51,7 @@ Lecture honnête de ces chiffres :
 - **Son apport décisif est l'abstention** : c'est le seul mode qui refuse les
   questions hors corpus (100 % contre 0 %). Sans lui, « quelle est la recette du
   gratin dauphinois ? » renvoie trois passages sur la segmentation réseau et la
-  conservation de signatures électroniques — et un LLM nourri de ces passages
+  conservation de signatures électroniques, et un LLM nourri de ces passages
   produira une réponse, fausse. Le reranking et le seuil ne servent pas à mieux
   trouver, ils servent à **savoir quand il n'y a rien à trouver**.
 - **BM25 seul tient la comparaison** (96 % contre 100 %) pour un coût sept fois
@@ -85,7 +85,7 @@ passage pertinent ». Les scores mesurés sur bge-reranker-v2-m3 racontent autre
 | « que faire si la porte reste ouverte ? » | **-2,34** | -11,0 et -11,0 |
 | « quelle est la recette du gratin dauphinois ? » | -11,02 | -11,0 et -11,0 |
 
-La séparation est franche — environ neuf points — mais elle ne passe pas par zéro.
+La séparation est franche, environ neuf points, mais elle ne passe pas par zéro.
 Un seuil à 0 rejetait donc de bonnes réponses. Placé à **-5**, au milieu de l'écart
 mesuré, il conserve 100 % d'abstention sur les questions hors corpus et supprime
 l'abstention à tort :

@@ -1,4 +1,4 @@
-# ADR 0010 — Déploiement Scaleway, autonome et sans exposition
+# ADR 0010 : Déploiement Scaleway, autonome et sans exposition
 
 - Statut : accepté
 - Date : 2026-09-18
@@ -11,7 +11,7 @@ dans les paquets privés d'un projet GitLab. Sans accès à ce dépôt, `tofu in
 échoue : l'infrastructure n'était pas reproductible pour qui n'était pas déjà dans
 l'organisation.
 
-Son `teardown.sh` détruisait la VM — et avec elle la base vectorielle, les
+Son `teardown.sh` détruisait la VM, et avec elle la base vectorielle, les
 documents et les modèles. La sauvegarde était une suggestion de commande dans le
 README, dont le chemin était d'ailleurs faux.
 
@@ -27,7 +27,7 @@ README, dont le chemin était d'ailleurs faux.
    `down.sh --all` supprime tout, après avoir fait taper « supprimer ». Éteindre
    une machine et perdre ses données sont deux décisions différentes.
 4. **Rien n'est publié sur Internet.** Le groupe de sécurité n'ouvre que SSH, depuis
-   une adresse déclarée. L'interface s'atteint par un tunnel SSH — donc pas de
+   une adresse déclarée. L'interface s'atteint par un tunnel SSH, donc pas de
    certificat TLS à gérer, pas de mot de passe applicatif exposé, et rien à scanner.
 5. **Aucun secret dans l'état OpenTofu.** Les identifiants Scaleway restent dans
    l'environnement (`SCW_ACCESS_KEY`, `SCW_SECRET_KEY`, `SCW_DEFAULT_PROJECT_ID`) ;
@@ -41,7 +41,7 @@ README, dont le chemin était d'ailleurs faux.
 
 ## Vérifications
 
-Sans déployer — aucun identifiant Scaleway n'est nécessaire pour cela :
+Sans déployer, et sans qu'aucun identifiant Scaleway n'est nécessaire pour cela :
 
 | Contrôle | Résultat |
 |---|---|
@@ -58,8 +58,8 @@ Sans déployer — aucun identifiant Scaleway n'est nécessaire pour cela :
 
 Le déploiement réel reste à faire : il demande des identifiants Scaleway et
 engage des frais. Tout ce qui pouvait être vérifié sans dépenser l'a été ; ce qui
-ne peut l'être qu'en conditions réelles — durée de cloud-init, débit de
-téléchargement des modèles, vitesse du 7B sur ce gabarit — est explicitement en
+ne peut l'être qu'en conditions réelles (durée de cloud-init, débit de
+téléchargement des modèles, vitesse du 7B sur ce gabarit) est explicitement en
 attente.
 
 Limite assumée : la mémoire reste le facteur dimensionnant, comme en local. Un

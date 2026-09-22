@@ -1,4 +1,4 @@
-# ADR 0004 — Découpage guidé par la structure
+# ADR 0004 : Découpage guidé par la structure
 
 - Statut : accepté
 - Date : 2026-09-17
@@ -37,7 +37,7 @@ aux limites de page et dépendait de `langchain-experimental`.
 
 ## Conséquences
 
-Corpus de référence : 941 sections donnent 1 160 chunks — médiane 136 tokens,
+Corpus de référence : 941 sections donnent 1 160 chunks : médiane 136 tokens,
 moyenne 248, maximum 694 (prose 429, tableaux 153, enregistrements 578). Aucun
 dépassement de la limite, vérifiable par `rag-source inspect data`.
 

@@ -1,4 +1,4 @@
-# ADR 0002 — Un chargeur par format, et extraction structurée
+# ADR 0002 : Un chargeur par format, et extraction structurée
 
 - Statut : accepté
 - Date : 2026-09-17
@@ -33,7 +33,7 @@ sous-dossier, et les fichiers Markdown et Excel n'étaient pas gérés du tout.
 ## Conséquences
 
 Sur le corpus de référence : 17 documents, 934 sections, environ 618 000
-caractères, aucun échec — contre zéro document auparavant.
+caractères, aucun échec, contre zéro document auparavant.
 
 La détection de titres par le style reste une heuristique. Elle est couverte par
 des tests sur des PDF fabriqués (titres, en-tête répété, sommaire, page de garde,

@@ -28,7 +28,7 @@ quelque chose est un RAG qui invente.
 
 ## Jeu de données
 
-`datasets/corpus-reference.jsonl` — une question par ligne :
+`datasets/corpus-reference.jsonl`, une question par ligne :
 
 ```json
 {"id": "r24-passerelle", "question": "Que dit la recommandation R24 … ?",

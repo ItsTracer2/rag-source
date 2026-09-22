@@ -1,7 +1,7 @@
 # RAG-Source
 
 Posez des questions à vos documents, obtenez des réponses **sourcées, citées et
-vérifiées** — ou un refus franc quand l'information n'y est pas.
+vérifiées**, ou un refus franc quand l'information n'y est pas.
 
 RAG-Source est un système de *Retrieval-Augmented Generation* auto-hébergeable de
 bout en bout : vos documents sont indexés localement, interrogés localement, et la
@@ -25,33 +25,14 @@ métier ou documentation réglementaire, en français comme en anglais.
 |---|---|
 | **Formats** | PDF (OCR compris), Markdown, Excel, CSV/TSV, texte, HTML, DOCX |
 | **Interfaces** | API HTTP, interface web, ligne de commande |
-| **Modèles** | Qwen2.5 (3B / 7B / 14B), bge-m3, bge-reranker-v2-m3 — tous locaux |
+| **Modèles** | Qwen2.5 (3B / 7B / 14B), bge-m3, bge-reranker-v2-m3 (tous locaux) |
 | **Recherche** | hybride (sémantique + mots-clés), reclassée, avec seuil de pertinence |
 | **Mesuré** | hit@6 100 %, MRR 0,98, 100 % d'abstention sur les questions hors corpus |
 
 ---
 
-## Par où commencer
-
-Le dépôt compte une centaine de fichiers ; six suffisent à comprendre le système.
-Dans cet ordre, comptez une dizaine de minutes :
-
-| | Fichier | Ce qu'on y voit |
-|---|---|---|
-| 1 | [`retrieval/search.py`](src/rag_source/retrieval/search.py) (224 l.) | la chaîne complète : recherche hybride, reclassement, seuil de pertinence, budget de contexte |
-| 2 | [`generation/prompts.py`](src/rag_source/generation/prompts.py) (126 l.) | comment une citation devient vérifiable, et pourquoi le modèle a le droit de ne pas savoir |
-| 3 | [`ingest/indexer.py`](src/rag_source/ingest/indexer.py) (173 l.) | pourquoi un document modifié ne laisse jamais de contenu périmé dans l'index |
-| 4 | [`ingest/loaders/base.py`](src/rag_source/ingest/loaders/base.py) (61 l.) | le registre qui rend l'ajout d'un format local à un seul fichier |
-| 5 | [ADR 0007](docs/adr/0007-recherche-hybride-et-evaluation.md) | comment les réglages ont été choisis par la mesure — y compris contre l'intuition |
-| 6 | [`tests/unit/test_search.py`](tests/unit/test_search.py) (198 l.) | ce que le système garantit, écrit sous forme exécutable |
-
-Le reste du code est de la même facture : 31 modules, 124 lignes en moyenne.
-
----
-
 ## Sommaire
 
-- [Par où commencer](#par-où-commencer)
 - [Ce qui distingue ce projet](#ce-qui-distingue-ce-projet)
 - [Architecture](#architecture)
 - [Prérequis](#prérequis)
@@ -91,7 +72,7 @@ seconde sur le corpus de référence.
 
 **Les réglages viennent de mesures, pas d'intuitions.** Le nombre de candidats
 reclassés, le seuil de pertinence et jusqu'à la formulation du prompt ont été
-choisis en comparant des chiffres — voir [`docs/adr/`](docs/adr/), où chaque
+choisis en comparant des chiffres : voir [`docs/adr/`](docs/adr/), où chaque
 décision est datée, justifiée et chiffrée.
 
 ---
@@ -114,12 +95,12 @@ décision est datée, justifiée et chiffrée.
                                                llama.cpp            llama.cpp
 ```
 
-**Indexation** — un chargeur par format extrait la *structure* (titres, tableaux,
+**Indexation.** Un chargeur par format extrait la *structure* (titres, tableaux,
 enregistrements), le découpage suit cette structure et mesure les tailles en tokens,
 puis chaque chunk est vectorisé deux fois : densément (bge-m3) et en mots-clés
 (BM25).
 
-**Interrogation** — la question suit le même double chemin ; Qdrant fusionne les
+**Interrogation.** La question suit le même double chemin ; Qdrant fusionne les
 deux classements (RRF) ; le reranker relit les candidats un par un et les réordonne ;
 les passages trop faibles sont écartés ; ce qui reste tient dans un budget de tokens
 et part au LLM avec la consigne de citer.
@@ -157,7 +138,7 @@ Les décisions d'architecture sont documentées une par une :
 Python n'a pas besoin d'être installé : `uv` s'en charge.
 
 Optionnel : **Tesseract** (`brew install tesseract tesseract-lang`) pour l'OCR des
-PDF scannés en local — l'image Docker de l'API l'embarque déjà.
+PDF scannés en local ; l'image Docker de l'API l'embarque déjà.
 
 ---
 
@@ -196,7 +177,7 @@ Profils disponibles dans [`models.lock`](models.lock) : `small` (3B), `medium` (
 ### macOS : LLM natif, nettement plus rapide
 
 Docker n'accède pas au GPU sur macOS. Exécuté nativement, le même modèle profite de
-Metal — **39 tokens/s au lieu de ~10** — et libère 1,2 Go :
+Metal (**39 tokens/s au lieu de ~10**) et libère 1,2 Go :
 
 ```bash
 brew install llama.cpp
@@ -214,7 +195,7 @@ L'API le joint automatiquement (`host.docker.internal:8081`).
 
 ### Interface web
 
-<http://127.0.0.1:8080> — les sources s'affichent pendant que la réponse s'écrit,
+<http://127.0.0.1:8080> : les sources s'affichent pendant que la réponse s'écrit,
 les `[n]` sont cliquables, et le mode de souveraineté est visible en permanence.
 
 ### Ligne de commande
@@ -232,7 +213,7 @@ rag-source eval                        # qualité de la recherche
 Options utiles : `--source <fichier>` pour restreindre à un document, `--mode` pour
 changer de stratégie de recherche, `--json` pour une sortie machine.
 
-Codes de retour : `0` succès, `1` résultat vide ou service dégradé, `2` erreur —
+Codes de retour : `0` succès, `1` résultat vide ou service dégradé, `2` erreur ;
 `rag-source health` fait donc une sonde de supervision utilisable telle quelle.
 
 `health`, `docs`, `ask` et `search` passent par l'API et fonctionnent à travers un
@@ -255,7 +236,7 @@ curl -s -X POST localhost:8000/v1/ask \
 |---|---|
 | `GET /health` | état des services, souveraineté, nombre d'extraits |
 | `GET /v1/documents` | documents indexés |
-| `POST /v1/search` | recherche seule — sépare ce qui est *trouvé* de ce qui est *dit* |
+| `POST /v1/search` | recherche seule, sépare ce qui est *trouvé* de ce qui est *dit* |
 | `POST /v1/ask` | réponse complète avec ses citations vérifiées |
 | `POST /v1/ask/stream` | même chose en flux SSE : `passages`, puis `token`, puis `done` |
 
@@ -332,7 +313,7 @@ vingtaine de lignes suffisent pour comparer des configurations.
 
 Un profil Scaleway (France) est fourni : instance provisionnée par OpenTofu, données
 sur un volume persistant qui survit à la destruction de la VM, **aucun port
-applicatif ouvert** — l'accès passe par un tunnel SSH — et LLM local imposé.
+applicatif ouvert** (l'accès passe par un tunnel SSH) et LLM local imposé.
 
 ```bash
 cd deploy/scaleway
@@ -396,7 +377,7 @@ uv run ruff check && uv run mypy src tests
 Les tests unitaires ne dépendent d'aucun modèle ni service : les fichiers d'exemple
 sont fabriqués par les tests eux-mêmes (PDF sur deux colonnes, page scannée, export
 CSV, document Word…), et les services externes sont simulés. Les tests
-d'intégration, eux, vérifient le contrat avec `llama.cpp`, Qdrant et l'API — ce
+d'intégration, eux, vérifient le contrat avec `llama.cpp`, Qdrant et l'API, ce
 qu'aucun test unitaire ne peut voir.
 
 L'intégration continue (GitHub Actions) exécute lint, format, typage strict et tests
@@ -406,23 +387,23 @@ unitaires sur chaque poussée.
 
 ## Dépannage
 
-**Un conteneur redémarre pendant l'indexation** — mémoire insuffisante : les trois
+**Un conteneur redémarre pendant l'indexation.** Mémoire insuffisante : les trois
 modèles travaillent ensemble. Augmentez la mémoire allouée à Docker (6 Go
 recommandés) ou exécutez le LLM nativement (voir plus haut).
 
-**`rag-source ask` répond « je ne trouve pas » à tort** — vérifiez d'abord la
+**`rag-source ask` répond « je ne trouve pas » à tort.** Vérifiez d'abord la
 recherche, pas le modèle : `rag-source search "vos mots clés"`. Si les passages sont
 absents, le problème est à l'ingestion (`rag-source inspect data --sample`) ou à
-l'indexation ; s'ils sont présents, le seuil de pertinence est trop haut — le banc
+l'indexation ; s'ils sont présents, le seuil de pertinence est trop haut : le banc
 d'évaluation permet de le régler (`rag-source eval --min-score …`).
 
-**« Aucun texte extrait : PDF scanné »** — installez Tesseract et les paquets de
+**« Aucun texte extrait : PDF scanné ».** Installez Tesseract et les paquets de
 langue voulus, ou forcez l'OCR avec `RAG_SOURCE_OCR_MODE=force`.
 
-**Qdrant répond 401** — le `.env` est absent ou la clé a changé :
+**Qdrant répond 401.** Le `.env` est absent ou la clé a changé :
 `./scripts/init-env.sh`, puis `docker compose up -d`.
 
-**La génération est lente** — c'est du CPU. Ordre de grandeur sur un Mac M2 avec le
+**La génération est lente.** C'est du CPU. Ordre de grandeur sur un Mac M2 avec le
 modèle 3B natif : 6 s pour une réponse complète, contre une trentaine de secondes
 pour le même modèle en conteneur. Un GPU change l'échelle.
 

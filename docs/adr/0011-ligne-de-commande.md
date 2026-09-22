@@ -1,4 +1,4 @@
-# ADR 0011 — Une ligne de commande, cliente de l'API
+# ADR 0011 : Une ligne de commande, cliente de l'API
 
 - Statut : accepté
 - Date : 2026-09-18
@@ -18,13 +18,13 @@ commodes pour avancer, mais ce n'est pas une interface.
 ## Décisions
 
 1. **Une seule commande, `rag-source`**, avec des sous-commandes. Les trois points
-   d'entrée temporaires sont supprimés — pas dépréciés : le projet n'a pas encore
+   d'entrée temporaires sont supprimés, pas dépréciés : le projet n'a pas encore
    d'utilisateurs à ménager, et deux chemins pour la même chose se contredisent tôt
    ou tard.
 2. **Deux familles, assumées** :
    - `health`, `docs`, `ask`, `search` parlent à l'**API** par HTTP, comme
      l'interface web. Une seule implémentation de la recherche et de la génération,
-     un seul endroit où corriger un défaut — et ces commandes fonctionnent à
+     un seul endroit où corriger un défaut, et ces commandes fonctionnent à
      travers un tunnel SSH, sans accès aux fichiers ;
    - `ingest`, `inspect`, `eval` travaillent **en local**, parce qu'elles lisent le
      corpus sur disque.

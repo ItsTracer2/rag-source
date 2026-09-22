@@ -2,7 +2,7 @@
 
 Une décision structurante par fichier : le contexte qui l'a rendue nécessaire, ce
 qui a été choisi, et ce que cela coûte. Les fichiers ne sont pas réécrits après
-coup — quand une décision en remplace une autre, une nouvelle ADR l'explique.
+coup : quand une décision en remplace une autre, une nouvelle ADR l'explique.
 
 La plupart de ces décisions se comparent à celles du projet dont RAG-Source
 s'inspire : cette comparaison est conservée, parce qu'une décision sans son

@@ -8,7 +8,7 @@ application, contraintes différentes.
 
 | | Poste de développement | Déploiement Scaleway |
 |---|---|---|
-| LLM | libre — externe autorisé | **local imposé** (`RAG_SOURCE_REQUIRE_LOCAL_LLM=true`) |
+| LLM | libre, externe autorisé | **local imposé** (`RAG_SOURCE_REQUIRE_LOCAL_LLM=true`) |
 | Accès | `127.0.0.1` | tunnel SSH, aucun port applicatif ouvert |
 | Données | dossiers du dépôt | volume persistant, survit à la destruction de la VM |
 | Modèle | profil `small` (3B) | profil `medium` (7B) par défaut |
@@ -46,7 +46,7 @@ ssh <vm> 'cd /opt/rag-source && docker compose exec -T api rag-source ingest /da
 ## Ce que crée le déploiement
 
 - **une instance** (`PRO2-S` par défaut : 4 vCPU, 16 Go) ;
-- **un volume de données** monté sur `/data` — modèles, corpus, index Qdrant ;
+- **un volume de données** monté sur `/data` : modèles, corpus, index Qdrant ;
 - **un groupe de sécurité** qui n'ouvre que le port 22, depuis l'adresse déclarée
   dans `allowed_ssh_cidr`.
 

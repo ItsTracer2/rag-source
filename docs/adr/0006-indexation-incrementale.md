@@ -1,4 +1,4 @@
-# ADR 0006 — Indexation incrémentale, et deux vecteurs par chunk
+# ADR 0006 : Indexation incrémentale, et deux vecteurs par chunk
 
 - Statut : accepté
 - Date : 2026-09-17
@@ -61,6 +61,6 @@ faudra passer à l'API de facettes de Qdrant sur des centaines de milliers.
 
 Contrainte matérielle rencontrée : Docker ne disposait que de 3,8 Gio, et les
 serveurs d'embedding et de reranking réservaient 8192 tokens de contexte multipliés
-par quatre créneaux parallèles — le conteneur se faisait tuer en pleine indexation.
+par quatre créneaux parallèles, et le conteneur se faisait tuer en pleine indexation.
 Les contextes sont ramenés à 2048 avec un seul créneau, largement suffisant pour des
 chunks d'au plus 700 tokens.

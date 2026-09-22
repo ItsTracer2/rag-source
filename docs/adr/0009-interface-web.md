@@ -1,4 +1,4 @@
-# ADR 0009 — Interface web sans framework, jeton porté par le proxy
+# ADR 0009 : Interface web sans framework, jeton porté par le proxy
 
 - Statut : accepté
 - Date : 2026-09-18
@@ -18,7 +18,7 @@ encore d'interface graphique web ; cible prochaine itération : Streamlit ou Gra
    client comme un autre, au même titre que la future ligne de commande.
 2. **Le jeton est porté par Caddy**, pas par le navigateur. La page ne stocke aucun
    secret : il n'y a rien à voler dans son code source ni dans le `localStorage`.
-   En contrepartie, quiconque atteint le port atteint l'API — d'où la publication
+   En contrepartie, quiconque atteint le port atteint l'API, d'où la publication
    sur `127.0.0.1` uniquement et, à distance, un tunnel SSH.
 3. **Tout passe par le flux SSE.** Les sources s'affichent dès que la recherche a
    conclu (1,6 s), la réponse s'écrit ensuite. Sur CPU, l'alternative serait un
@@ -34,7 +34,7 @@ encore d'interface graphique web ; cible prochaine itération : Streamlit ou Gra
 ## Conséquences
 
 La pile complète tient en une commande : `docker compose up -d`, puis
-`http://127.0.0.1:8080`. L'image de l'API pèse 570 Mo, sans PyTorch — les modèles
+`http://127.0.0.1:8080`. L'image de l'API pèse 570 Mo, sans PyTorch : les modèles
 vivent dans les conteneurs llama.cpp.
 
 Mesuré à travers le proxy, avec le LLM natif : passages à 1,6 s, premier token à
@@ -42,7 +42,7 @@ Mesuré à travers le proxy, avec le LLM natif : passages à 1,6 s, premier toke
 
 L'interface reste volontairement simple : une conversation, un filtre, un choix de
 mode de recherche. Elle n'a ni comptes, ni conversations sauvegardées, ni envoi de
-documents — autant de fonctions qui appelleraient une base de données et un modèle
+documents, autant de fonctions qui appelleraient une base de données et un modèle
 d'autorisation, c'est-à-dire un autre projet.
 
 Le fournisseur `anthropic` de la configuration devient `external` : l'étape qui

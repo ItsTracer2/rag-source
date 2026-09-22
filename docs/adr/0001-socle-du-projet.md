@@ -1,4 +1,4 @@
-# ADR 0001 — Socle du projet
+# ADR 0001 : Socle du projet
 
 - Statut : accepté
 - Date : 2026-09-17

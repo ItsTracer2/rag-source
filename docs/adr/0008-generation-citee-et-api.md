@@ -1,4 +1,4 @@
-# ADR 0008 — Génération citée et API HTTP
+# ADR 0008 : Génération citée et API HTTP
 
 - Statut : accepté
 - Date : 2026-09-18
@@ -69,11 +69,11 @@ s'écrit ensuite. Sans lui, l'interface resterait muette une dizaine de secondes
 
 Le LLM en conteneur se faisait tuer par manque de mémoire dès que les trois modèles
 travaillaient ensemble (3,8 Gio pour toute la VM Docker). Exécuté nativement avec
-Metal — le chemin déjà prévu par `compose.native-llm.yaml` — il passe de ~10 à
+Metal (le chemin déjà prévu par `compose.native-llm.yaml`), il passe de ~10 à
 **39 tokens/s** et libère 1,2 Gio. C'est désormais le mode recommandé sur macOS, et
 le README le dit.
 
 Limite assumée : la vérification des citations contrôle qu'un numéro cité existe,
 pas que la phrase citée est fidèle au passage. Vérifier la fidélité demande un
-modèle juge, donc du temps et de la prudence — ce sera une option d'évaluation, pas
+modèle juge, donc du temps et de la prudence : ce sera une option d'évaluation, pas
 un contrôle à chaud.
